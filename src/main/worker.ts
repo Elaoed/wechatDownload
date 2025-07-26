@@ -131,12 +131,28 @@ async function axiosDlOne(articleInfo: ArticleInfo, reCall = false) {
   }
 
   const gzhInfo = articleInfo.gzhInfo;
+  const headers: any = {
+    'User-Agent': gzhInfo && gzhInfo.UserAgent ? gzhInfo.UserAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Referer': 'https://mp.weixin.qq.com/',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1'
+  };
+  
+  // 使用监控模式捕获的Cookie进行身份验证
+  if (gzhInfo && gzhInfo.Cookie) {
+    headers['Cookie'] = gzhInfo.Cookie;
+  }
+  
   await axios
     .get(articleInfo.contentUrl, {
       params: {
         key: gzhInfo ? gzhInfo.key : '',
         uin: gzhInfo ? gzhInfo.uin : ''
-      }
+      },
+      headers: headers
     })
     .then((response) => {
       if (response.status != 200) {

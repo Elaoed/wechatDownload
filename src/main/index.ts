@@ -355,12 +355,12 @@ async function monitorArticle() {
     outputLog('请在微信打开任意一篇需要批量下载的公号的文章', true);
     outputLog('别偷懒，已经打开的不算...', true);
 
-    // 10秒之后自动关闭代理
+    // 30秒之后自动关闭代理
     TIMER = setTimeout(() => {
       outputLog('批量下载超时，未监测到公号文章！', true);
       AnyProxy.utils.systemProxyMgr.disableGlobalProxy();
       MAIN_WINDOW.webContents.send('download-fnish');
-    }, 15000);
+    }, 30000);
   }
 }
 /*
@@ -404,6 +404,7 @@ function createProxy(): AnyProxy.ProxyServer {
     rule: {
       summary: 'My Custom Rule',
       beforeSendResponse(requestDetail, responseDetail) {
+        
         // 批量下载
         if (DL_TYPE == DlEventEnum.BATCH_WEB && requestDetail.url.indexOf('https://mp.weixin.qq.com/mp/getbizbanner') == 0) {
           const uin = HttpUtil.getQueryVariable(requestDetail.url, 'uin');
@@ -461,19 +462,22 @@ function createProxy(): AnyProxy.ProxyServer {
             const sn = HttpUtil.getQueryVariable(referer, 'sn');
             const chksm = HttpUtil.getQueryVariable(referer, 'chksm');
             const idx = HttpUtil.getQueryVariable(referer, 'idx');
-            const gzhInfo = new GzhInfo(biz, key, uin);
-            gzhInfo.Cookie = headers['Cookie'] as string;
-            gzhInfo.UserAgent = headers['User-Agent'] as string;
+            
+            if (biz && mid && key) {
+              const gzhInfo = new GzhInfo(biz, key, uin);
+              gzhInfo.Cookie = headers['Cookie'] as string;
+              gzhInfo.UserAgent = headers['User-Agent'] as string;
 
-            const articleUrl = `http://mp.weixin.qq.com/s?__biz=${biz}&amp;mid=${mid}&amp;idx=${idx}&amp;sn=${sn}&amp;chksm=${chksm}&amp;scene=27#wechat_redirect`;
+              const articleUrl = `http://mp.weixin.qq.com/s?__biz=${biz}&mid=${mid}&idx=${idx}&sn=${sn}&chksm=${chksm}&scene=27#wechat_redirect`;
 
-            const articleInfo = new ArticleInfo(null, null, '');
-            articleInfo.contentUrl = articleUrl;
-            articleInfo.gzhInfo = gzhInfo;
+              const articleInfo = new ArticleInfo(null, null, '');
+              articleInfo.contentUrl = articleUrl;
+              articleInfo.gzhInfo = gzhInfo;
 
-            articleArr.push(articleInfo);
+              articleArr.push(articleInfo);
 
-            outputLog(`已获取文章，mid：${mid}`, true);
+              outputLog(`已获取文章，mid：${mid}`, true);
+            }
           }
         }
 
