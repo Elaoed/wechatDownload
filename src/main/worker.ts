@@ -216,7 +216,57 @@ async function dlOne(articleInfo: ArticleInfo, saveToDb = true) {
     _article = reader.parse();
   }
   if (!_article) {
-    resp(NwrEnum.FAIL, '提取正文失败');
+    logger.error('Readability解析失败，可能包含视频或特殊内容');
+    logger.debug('HTML内容预览:', articleInfo.html?.substring(0, 1000));
+    
+    // 分析HTML结构
+    const $ = cheerio.load(articleInfo.html || '');
+    logger.info('文章标题:', $('title').text() || $('.rich_media_title').text());
+    logger.info('主要元素分析:');
+    logger.info('- iframe数量:', $('iframe').length);
+    logger.info('- video数量:', $('video').length);
+    logger.info('- embed数量:', $('embed').length);
+    logger.info('- class包含video的元素:', $('[class*="video"]').length);
+    logger.info('- class包含media的元素:', $('[class*="media"]').length);
+    logger.info('- js_content存在:', $('#js_content').length > 0);
+    logger.info('- readability-page存在:', $('#readability-page-1').length > 0);
+    
+    // 检查是否包含视频相关元素
+    const videoTags = ['iframe', 'video', 'embed', 'object', 'mpvideo'];
+    const videoPatterns = [
+      'mp-common-video',
+      'wxvideo',
+      'video_iframe',
+      'wx_video',
+      'mpvideo',
+      'class="video',
+      'data-src.*\\.(mp4|mov|avi)',
+      'txv_iframe',
+      'video-js'
+    ];
+    
+    const hasVideoTag = videoTags.some(tag => articleInfo.html?.includes(`<${tag}`));
+    const hasVideoPattern = videoPatterns.some(pattern => {
+      const regex = new RegExp(pattern, 'i');
+      return regex.test(articleInfo.html || '');
+    });
+    
+    const hasVideo = hasVideoTag || hasVideoPattern;
+    
+    if (hasVideo) {
+      const detectedTags = videoTags.filter(tag => articleInfo.html?.includes(`<${tag}`));
+      const detectedPatterns = videoPatterns.filter(pattern => {
+        const regex = new RegExp(pattern, 'i');
+        return regex.test(articleInfo.html || '');
+      });
+      
+      resp(NwrEnum.FAIL, '文章包含视频内容，当前版本不支持解析带视频的文章');
+      logger.info(`检测到视频标签: ${detectedTags}`);
+      logger.info(`检测到视频模式: ${detectedPatterns}`);
+    } else {
+      resp(NwrEnum.FAIL, '提取正文失败，请检查文章格式是否支持');
+      logger.info('未检测到明显的视频元素，可能是其他格式问题');
+    }
     return;
   }
   const article = _article;
