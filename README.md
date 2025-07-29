@@ -1,9 +1,10 @@
 # wechatDownload
 
-
 微信公众号文章下载工具
 
-从原repository fork出来，针对不可用的地方用claude code进行了一些修改，目前单文件下载/监控模式可用，批量下载暂不可用
+从原repository fork出来，[原项目地址](https://github.com/xiaoguyu/wechatDownload)
+因为原项目已经不再维护，在这一年当中不知为何下载功能失效了，作为使用者非常的心急。但是又不准备花大力气去熟悉整个代码（因为本人是纯后端，所以是大力气）。有一天突然接触了AI编程，于是乎就把项目作为熟悉AI编程的一个试手工具，发现嗯确实好用。
+针对不可用的地方用claude code进行了一些修改，目前单文件下载/监控模式可用，批量下载暂不可用。
 
 ## 前言
 
@@ -168,7 +169,7 @@ $ npm run build:mac
 $ npm run build:linux
 ```
 
-## 特别感谢
+## 特别感谢(本forker没拿到就先不感谢了)
 
 [![](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg)](https://www.jetbrains.com/?from=wechatDownload)
 
