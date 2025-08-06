@@ -1,54 +1,76 @@
-# WeChat Download Project Commands
+# CLAUDE.md
 
-## Common Commands
-- **List files**: `ls -la`
-- **Search text**: `grep -r "pattern" .` or use `rg "pattern"` (ripgrep)
-- **Find files**: `find . -name "*.ts"` or `find . -name "*.vue"`
-- **View file**: `cat filename`
-- **File permissions**: `chmod 755 filename`
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project-specific Commands
-- **Build**: `npm run build`
-- **Type check**: `npm run typecheck`
-- **Lint**: `npm run lint`
-- **Format code**: `npm run format`
-- **Start dev**: `npm run dev`
-- **Build for different platforms**:
-  - Windows: `npm run build:win`
-  - macOS: `npm run build:mac`
-  - Linux: `npm run build:linux`
+## Project Overview
+微信公众号文章下载工具 - WeChat article download tool built with Electron + TypeScript + Vue3.
 
-## Development Workflow
-1. Install dependencies: `npm install`
-2. Run development server: `npm run dev`
-3. Type check: `npm run typecheck`
-4. Lint and format: `npm run lint && npm run format`
-5. Build for production: `npm run build`
+**Core Architecture**:
+- **Main Process** (`src/main/`): Electron main process with proxy server, worker thread management, and system integration
+- **Renderer Process** (`src/renderer/`): Vue 3 frontend with TypeScript
+- **Worker Threads**: Background processing for article downloads and EPUB generation
+- **Proxy System**: AnyProxy-based HTTP proxy for intercepting WeChat API calls
 
-## Key Project Files
-- **Main process**: `src/main/index.ts`
-- **Worker thread**: `src/main/worker.ts`
-- **Service logic**: `src/main/service.ts`
-- **Frontend**: `src/renderer/src/views/Home.vue`
-- **Settings**: `src/renderer/src/views/Setting.vue`
+## Essential Commands
+- **Development**: `npm run dev` 
+- **Type checking**: `npm run typecheck` (runs both node and web checks)
+- **Linting**: `npm run lint`
+- **Code formatting**: `npm run format`
+- **Build**: `npm run build` (includes typecheck)
+- **Platform builds**: `npm run build:win`, `npm run build:mac`, `npm run build:linux`
 
-## Debug Commands
-- **View logs**: Check electron-log output in app data directory
-- **Open dev tools**: F12 when app is running
-- **Check proxy status**: Monitor network requests in dev tools
-- **Check proxy running**: `lsof -i :8001` (check if port 8001 is in use)
-- **Check system proxy**: `scutil --proxy` (macOS) or `netsh winhttp show proxy` (Windows)
-- **View worker errors**: Check console for worker thread errors
+## Core Architecture Components
 
-## Troubleshooting Batch Download Issues
-1. **Check CA certificate**: Settings → Install Certificate
-2. **Verify proxy setup**: Check if port 8001 is accessible
-3. **WeChat app**: Must open NEW articles in WeChat (not browser)
-4. **Network**: Ensure no conflicting proxies or VPNs
-5. **Logs**: Check detailed logs in electron-log files for specific errors
+### Main Process (`src/main/index.ts`)
+- Electron app initialization and window management
+- AnyProxy server setup for intercepting WeChat requests
+- IPC handlers for renderer communication
+- CA certificate management and installation
+- Comprehensive proxy cleanup system for all platforms
+- Auto-updater integration
 
-## Common Error Solutions
-- **IMKCFRunLoopWakeUpReliable**: Harmless macOS system warning, ignore
-- **Nothing downloads**: Check CA certificate installation and proxy status
-- **Timeout errors**: Ensure proper WeChat article opening procedure
-- **Parameter extraction fails**: Check network connectivity and WeChat session
+### Worker Threads
+- **Main Worker** (`src/main/worker.ts`): Handles article downloading, HTML/Markdown conversion, MySQL integration
+- **EPUB Worker** (`src/main/epubWorker.ts`): Generates EPUB files from downloaded HTML articles
+- **Service Layer** (`src/main/service.ts`): Core business logic classes (GzhInfo, ArticleInfo, etc.)
+
+### Proxy & Parameter Extraction
+The app uses AnyProxy to intercept WeChat API calls and extract:
+- `__biz`: WeChat account ID  
+- `uin`: WeChat user ID
+- `key`: Authentication parameter
+
+Three download modes:
+1. **Single article**: Direct URL download (no proxy needed)
+2. **Batch download**: Proxy intercepts parameters, downloads entire account history
+3. **Monitor download**: Proxy collects URLs from multiple opened articles
+
+### Frontend (`src/renderer/src/`)
+- **Home.vue**: Main interface for downloads and monitoring
+- **Setting.vue**: Configuration interface for all download options
+- **EpubCreator.vue**: EPUB generation interface
+
+## Key Configuration
+- **Proxy port**: 8001 (hardcoded in createProxy function)
+- **Logging**: Uses electron-log, outputs to app data directory
+- **Storage**: electron-store for settings persistence
+- **CA certificates**: Auto-generated in `~/.anyproxy/certificates/`
+
+## Development Notes
+- Uses electron-vite for build system
+- Supports MySQL integration for article storage
+- Comprehensive proxy cleanup on app exit (critical for system stability)
+- Platform-specific CA certificate handling (Windows auto-install)
+- Worker thread architecture prevents UI blocking during downloads
+
+## Debugging
+- **Proxy issues**: Check port 8001 availability with `lsof -i :8001`
+- **CA certificate**: Settings → Install Certificate (Windows), manual install (macOS/Linux)
+- **Logs**: Settings → Open Log Directory
+- **Worker errors**: Check electron-log files for detailed worker thread errors
+
+## Critical Implementation Details
+- Proxy cleanup is essential - implements multiple cleanup strategies for robustness
+- WeChat article URLs must be opened fresh (not from browser cache)
+- MySQL schema defined in `/doc/mysql.sql`
+- Filter rules support title/author keyword filtering with include/exclude patterns

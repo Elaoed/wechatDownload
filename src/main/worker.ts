@@ -133,19 +133,19 @@ async function axiosDlOne(articleInfo: ArticleInfo, reCall = false) {
   const gzhInfo = articleInfo.gzhInfo;
   const headers: any = {
     'User-Agent': gzhInfo && gzhInfo.UserAgent ? gzhInfo.UserAgent : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
     'Accept-Encoding': 'gzip, deflate, br',
-    'Referer': 'https://mp.weixin.qq.com/',
-    'Connection': 'keep-alive',
+    Referer: 'https://mp.weixin.qq.com/',
+    Connection: 'keep-alive',
     'Upgrade-Insecure-Requests': '1'
   };
-  
+
   // 使用监控模式捕获的Cookie进行身份验证
   if (gzhInfo && gzhInfo.Cookie) {
     headers['Cookie'] = gzhInfo.Cookie;
   }
-  
+
   await axios
     .get(articleInfo.contentUrl, {
       params: {
@@ -218,7 +218,7 @@ async function dlOne(articleInfo: ArticleInfo, saveToDb = true) {
   if (!_article) {
     logger.error('Readability解析失败，可能包含视频或特殊内容');
     logger.debug('HTML内容预览:', articleInfo.html?.substring(0, 1000));
-    
+
     // 分析HTML结构
     const $ = cheerio.load(articleInfo.html || '');
     logger.info('文章标题:', $('title').text() || $('.rich_media_title').text());
@@ -230,36 +230,26 @@ async function dlOne(articleInfo: ArticleInfo, saveToDb = true) {
     logger.info('- class包含media的元素:', $('[class*="media"]').length);
     logger.info('- js_content存在:', $('#js_content').length > 0);
     logger.info('- readability-page存在:', $('#readability-page-1').length > 0);
-    
+
     // 检查是否包含视频相关元素
     const videoTags = ['iframe', 'video', 'embed', 'object', 'mpvideo'];
-    const videoPatterns = [
-      'mp-common-video',
-      'wxvideo',
-      'video_iframe',
-      'wx_video',
-      'mpvideo',
-      'class="video',
-      'data-src.*\\.(mp4|mov|avi)',
-      'txv_iframe',
-      'video-js'
-    ];
-    
-    const hasVideoTag = videoTags.some(tag => articleInfo.html?.includes(`<${tag}`));
-    const hasVideoPattern = videoPatterns.some(pattern => {
+    const videoPatterns = ['mp-common-video', 'wxvideo', 'video_iframe', 'wx_video', 'mpvideo', 'class="video', 'data-src.*\\.(mp4|mov|avi)', 'txv_iframe', 'video-js'];
+
+    const hasVideoTag = videoTags.some((tag) => articleInfo.html?.includes(`<${tag}`));
+    const hasVideoPattern = videoPatterns.some((pattern) => {
       const regex = new RegExp(pattern, 'i');
       return regex.test(articleInfo.html || '');
     });
-    
+
     const hasVideo = hasVideoTag || hasVideoPattern;
-    
+
     if (hasVideo) {
-      const detectedTags = videoTags.filter(tag => articleInfo.html?.includes(`<${tag}`));
-      const detectedPatterns = videoPatterns.filter(pattern => {
+      const detectedTags = videoTags.filter((tag) => articleInfo.html?.includes(`<${tag}`));
+      const detectedPatterns = videoPatterns.filter((pattern) => {
         const regex = new RegExp(pattern, 'i');
         return regex.test(articleInfo.html || '');
       });
-      
+
       resp(NwrEnum.FAIL, '文章包含视频内容，当前版本不支持解析带视频的文章');
       logger.info(`检测到视频标签: ${detectedTags}`);
       logger.info(`检测到视频模式: ${detectedPatterns}`);

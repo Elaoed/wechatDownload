@@ -201,23 +201,22 @@ async function cleanupProxy() {
       logger.error('关闭代理服务器失败', error);
     }
   }
-  
+
   // 强制清理系统代理设置
   try {
     // 方法1: 使用 AnyProxy 的标准方法
     AnyProxy.utils.systemProxyMgr.disableGlobalProxy();
     logger.info('已尝试禁用全局代理');
-    
+
     // 方法2: 在 macOS 上使用系统命令强制清理
     if (process.platform === 'darwin') {
       await cleanupMacOSProxy();
     }
-    
+
     // 方法3: Windows 系统的清理
     if (process.platform === 'win32') {
       await cleanupWindowsProxy();
     }
-    
   } catch (error) {
     logger.error('代理清理过程中发生错误', error);
   }
@@ -227,12 +226,12 @@ async function cleanupProxy() {
 function cleanupMacOSProxy(): Promise<void> {
   return new Promise((resolve) => {
     const exec = child_process.exec;
-    
+
     // 直接清理常见的网络服务，不等待列表获取
     const commonServices = ['Wi-Fi', 'Ethernet', 'iPhone USB', 'Thunderbolt Bridge', 'USB 10/100/1000 LAN'];
     let cleanupCount = 0;
     const totalCleanups = commonServices.length * 2; // HTTP + HTTPS for each service
-    
+
     const checkComplete = () => {
       cleanupCount++;
       if (cleanupCount >= totalCleanups) {
@@ -240,8 +239,8 @@ function cleanupMacOSProxy(): Promise<void> {
         resolve();
       }
     };
-    
-    commonServices.forEach(service => {
+
+    commonServices.forEach((service) => {
       // 清理 HTTP 代理
       exec(`networksetup -setwebproxystate "${service}" off`, (err) => {
         if (!err) {
@@ -251,7 +250,7 @@ function cleanupMacOSProxy(): Promise<void> {
         }
         checkComplete();
       });
-      
+
       // 清理 HTTPS 代理
       exec(`networksetup -setsecurewebproxystate "${service}" off`, (err) => {
         if (!err) {
@@ -262,7 +261,7 @@ function cleanupMacOSProxy(): Promise<void> {
         checkComplete();
       });
     });
-    
+
     // 设置超时，防止无限等待
     setTimeout(() => {
       logger.info('macOS 代理清理超时，强制完成');
@@ -289,7 +288,7 @@ function cleanupWindowsProxy(): Promise<void> {
 // 立即清理代理（同步版本，用于监控模式结束时）
 function cleanupProxyImmediate() {
   logger.info('立即清理代理设置...');
-  
+
   if (PROXY_SERVER) {
     try {
       PROXY_SERVER.close();
@@ -298,17 +297,17 @@ function cleanupProxyImmediate() {
       logger.error('关闭代理服务器失败', error);
     }
   }
-  
+
   try {
     // 方法1: AnyProxy标准方法
     AnyProxy.utils.systemProxyMgr.disableGlobalProxy();
-    
+
     // 方法2: 系统命令强制清理
     const execSync = child_process.execSync;
-    
+
     if (process.platform === 'darwin') {
       const commonServices = ['Wi-Fi', 'Ethernet', 'iPhone USB', 'Thunderbolt Bridge'];
-      commonServices.forEach(service => {
+      commonServices.forEach((service) => {
         try {
           execSync(`networksetup -setwebproxystate "${service}" off`, { timeout: 1000, stdio: 'ignore' });
           execSync(`networksetup -setsecurewebproxystate "${service}" off`, { timeout: 1000, stdio: 'ignore' });
@@ -318,7 +317,7 @@ function cleanupProxyImmediate() {
       });
       logger.info('macOS 代理已清理');
     }
-    
+
     if (process.platform === 'win32') {
       try {
         execSync('reg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f', { timeout: 1000, stdio: 'ignore' });
@@ -327,7 +326,6 @@ function cleanupProxyImmediate() {
         logger.error('Windows 代理清理失败', err);
       }
     }
-    
   } catch (error) {
     logger.error('立即代理清理失败', error);
   }
@@ -344,27 +342,27 @@ app.on('window-all-closed', async () => {
 // 处理应用程序退出前的清理（包括 cmd+q 强制退出）
 app.on('before-quit', (event) => {
   logger.info('应用程序即将退出，正在清理代理...');
-  
+
   // 阻止默认退出行为
   event.preventDefault();
-  
+
   // 立即同步清理代理
   try {
     if (PROXY_SERVER) {
       PROXY_SERVER.close();
       logger.info('代理服务器已关闭');
     }
-    
+
     // 同步执行清理命令
     const execSync = child_process.execSync;
-    
+
     // 方法1: AnyProxy标准方法
     AnyProxy.utils.systemProxyMgr.disableGlobalProxy();
-    
+
     // 方法2: 在macOS上强制清理
     if (process.platform === 'darwin') {
       const commonServices = ['Wi-Fi', 'Ethernet', 'iPhone USB', 'Thunderbolt Bridge'];
-      commonServices.forEach(service => {
+      commonServices.forEach((service) => {
         try {
           execSync(`networksetup -setwebproxystate "${service}" off`, { timeout: 1000 });
           execSync(`networksetup -setsecurewebproxystate "${service}" off`, { timeout: 1000 });
@@ -374,7 +372,7 @@ app.on('before-quit', (event) => {
         }
       });
     }
-    
+
     // 方法3: Windows清理
     if (process.platform === 'win32') {
       try {
@@ -384,12 +382,12 @@ app.on('before-quit', (event) => {
         logger.error('Windows 代理清理失败', err);
       }
     }
-    
+
     logger.info('代理清理完成，准备退出');
   } catch (error) {
     logger.error('代理清理失败', error);
   }
-  
+
   // 清理完成，真正退出应用
   app.exit(0);
 });
@@ -542,7 +540,7 @@ async function html2Pdf(pdfInfo: PdfInfo) {
       .printToPDF({})
       .then((data) => {
         const fileName = pdfInfo.fileName || 'index';
-        fs.writeFileSync(path.join(pdfInfo.savePath, `${fileName}.pdf`), data);
+        fs.writeFileSync(path.join(pdfInfo.savePath, `${fileName}.pdf`), new Uint8Array(data));
         outputLog(`【${pdfInfo.title}】保存PDF完成`, true);
       })
       .catch((error) => {
@@ -631,7 +629,6 @@ function createProxy(): AnyProxy.ProxyServer {
     rule: {
       summary: 'My Custom Rule',
       beforeSendResponse(requestDetail, responseDetail) {
-        
         // 批量下载
         if (DL_TYPE == DlEventEnum.BATCH_WEB && requestDetail.url.indexOf('https://mp.weixin.qq.com/mp/getbizbanner') == 0) {
           const uin = HttpUtil.getQueryVariable(requestDetail.url, 'uin');
@@ -690,7 +687,7 @@ function createProxy(): AnyProxy.ProxyServer {
             const sn = HttpUtil.getQueryVariable(referer, 'sn');
             const chksm = HttpUtil.getQueryVariable(referer, 'chksm');
             const idx = HttpUtil.getQueryVariable(referer, 'idx');
-            
+
             if (biz && mid && key) {
               const gzhInfo = new GzhInfo(biz, key, uin);
               gzhInfo.Cookie = headers['Cookie'] as string;
