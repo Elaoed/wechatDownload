@@ -196,6 +196,7 @@ async function cleanupProxy() {
   if (PROXY_SERVER) {
     try {
       PROXY_SERVER.close();
+      PROXY_SERVER = null;
       logger.info('代理服务器已关闭');
     } catch (error) {
       logger.error('关闭代理服务器失败', error);
@@ -292,6 +293,7 @@ function cleanupProxyImmediate() {
   if (PROXY_SERVER) {
     try {
       PROXY_SERVER.close();
+      PROXY_SERVER = null;
       logger.info('代理服务器已关闭');
     } catch (error) {
       logger.error('关闭代理服务器失败', error);
@@ -350,6 +352,7 @@ app.on('before-quit', (event) => {
   try {
     if (PROXY_SERVER) {
       PROXY_SERVER.close();
+      PROXY_SERVER = null;
       logger.info('代理服务器已关闭');
     }
 
@@ -783,7 +786,7 @@ function setDefaultSetting() {
     // 线程类型
     threadType: 'multi',
     // 下载间隔
-    dlInterval: 500,
+    dlInterval: 100,
     // 单批数量
     batchLimit: 10,
     // 下载为html

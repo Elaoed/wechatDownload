@@ -86,7 +86,7 @@
               <el-date-picker v-model="settingInfo.endDate" style="width: 180px" type="date" placeholder="选择结束日期" format="YYYY年MM月DD日" value-format="YYYY-MM-DD"></el-date-picker>
             </div>
           </div>
-          <div title="不懂的建议使用默认配置,间隔:500,单批:10" class="div-border div-pd">
+          <div title="不懂的建议使用默认配置,间隔:100,单批:10" class="div-border div-pd">
             <div>
               <span class="line-center">线程配置 </span>
               <el-radio-group v-model="settingInfo.threadType">
@@ -161,7 +161,7 @@ const settingInfo = reactive({
   // 线程类型
   threadType: 'multi',
   // 下载间隔
-  dlInterval: 500,
+  dlInterval: 100,
   // 单批数量
   batchLimit: 5,
   // 下载为html
