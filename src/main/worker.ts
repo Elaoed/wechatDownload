@@ -1200,6 +1200,9 @@ async function downList(nextOffset: number, articleArr: ArticleInfo[], startDate
   }
 
   if (flgContinue && dataObj['can_msg_continue'] == 1) {
+    // 添加随机分页请求间隔，避免触发微信限制
+    const randomDelay = Math.floor(Math.random() * (1200 - 500 + 1)) + 500;
+    await sleep(randomDelay);
     await downList(dataObj['next_offset'], articleArr, startDate, endDate, articleCount);
   }
 }

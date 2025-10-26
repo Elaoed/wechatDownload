@@ -804,11 +804,11 @@ function setDefaultSetting() {
     // 下载来源
     dlSource: 'web',
     // 线程类型
-    threadType: 'multi',
+    threadType: 'single',
     // 下载间隔
     dlInterval: 100,
     // 单批数量
-    batchLimit: 10,
+    batchLimit: 1,
     // 下载为html
     dlHtml: 1,
     // 下载为markdown
