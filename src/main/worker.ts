@@ -55,6 +55,28 @@ const FAIL_WAIT_SECOND = 60;
 // 触发公众号反爬机制时重试次数
 const FAIL_RETRY = 1;
 
+// 文章统计计数器
+let TOTAL_ARTICLES = 0;
+let EMPTY_NAME_ARTICLES = 0;
+let VALID_NAME_ARTICLES = 0;
+
+// 统计文章名称情况
+function countArticles(articleArr: ArticleInfo[]) {
+  for (const article of articleArr) {
+    TOTAL_ARTICLES++;
+    if (!article.title || article.title.trim() === '') {
+      EMPTY_NAME_ARTICLES++;
+    } else {
+      VALID_NAME_ARTICLES++;
+    }
+  }
+}
+
+// 输出文章统计信息
+function reportArticleStats(phase: string) {
+  resp(NwrEnum.SUCCESS, `${phase} - 总文章数: ${TOTAL_ARTICLES}, 空标题: ${EMPTY_NAME_ARTICLES}, 有效标题: ${VALID_NAME_ARTICLES}`);
+}
+
 // 阻塞线程的sleep函数
 function sleep(delay?: number): Promise<void> {
   return new Promise((resolve) => {
@@ -1049,7 +1071,7 @@ async function batchDownloadFromWeb() {
   const exeEndTime = performance.now();
   const exeTime = (exeEndTime - exeStartTime) / 1000;
 
-  resp(NwrEnum.BATCH_FINISH, `批量下载完成，共${articleCount[0]}篇文章，耗时${exeTime.toFixed(2)}秒`);
+  resp(NwrEnum.BATCH_FINISH, `批量下载完成，共${articleCount[0]}篇文章，耗时${exeTime.toFixed(2)}秒。统计: 总数${TOTAL_ARTICLES}, 空标题${EMPTY_NAME_ARTICLES}, 有效标题${VALID_NAME_ARTICLES}`);
 
   finish();
 }
@@ -1058,6 +1080,10 @@ async function batchDownloadFromWeb() {
  */
 async function batchDownloadFromWebSelect(articleArr: ArticleInfo[]) {
   const exeStartTime = performance.now();
+  
+  // 统计监控模式的文章名称情况
+  countArticles(articleArr);
+  resp(NwrEnum.SUCCESS, `监控模式统计: 总数${TOTAL_ARTICLES}, 空标题${EMPTY_NAME_ARTICLES}, 有效标题${VALID_NAME_ARTICLES}`);
 
   const promiseArr: Promise<void>[] = [];
   for (let i = 0; i < articleArr.length; i++) {
@@ -1088,7 +1114,7 @@ async function batchDownloadFromWebSelect(articleArr: ArticleInfo[]) {
   const exeEndTime = performance.now();
   const exeTime = (exeEndTime - exeStartTime) / 1000;
 
-  resp(NwrEnum.BATCH_FINISH, `批量下载完成，共${articleArr.length}篇文章，耗时${exeTime.toFixed(2)}秒`);
+  resp(NwrEnum.BATCH_FINISH, `监控下载完成，共${articleArr.length}篇文章，耗时${exeTime.toFixed(2)}秒。统计: 总数${TOTAL_ARTICLES}, 空标题${EMPTY_NAME_ARTICLES}, 有效标题${VALID_NAME_ARTICLES}`);
 
   finish();
 }
@@ -1165,8 +1191,13 @@ async function downList(nextOffset: number, articleArr: ArticleInfo[], startDate
       }
     }
   }
+  
+  // 统计新获取的文章名称情况
+  const newArticles = articleArr.slice(oldArticleLengh);
+  countArticles(newArticles);
+  
   articleCount[0] = articleCount[0] + articleArr.length - oldArticleLengh;
-  resp(NwrEnum.SUCCESS, `正在获取文章列表，目前数量：${articleCount[0]}`);
+  resp(NwrEnum.SUCCESS, `正在获取文章列表，目前数量：${articleCount[0]} (空标题: ${EMPTY_NAME_ARTICLES}, 有效标题: ${VALID_NAME_ARTICLES})`);
   // 单线程下载
   if (downloadOption.threadType == 'single') {
     for (let i = 0; i < articleArr.length; i++) {
