@@ -575,8 +575,15 @@ async function monitorArticle() {
     }
     DL_TYPE = DlEventEnum.BATCH_WEB;
     // 开启代理
-    AnyProxy.utils.systemProxyMgr.enableGlobalProxy('127.0.0.1', '8001');
-    AnyProxy.utils.systemProxyMgr.enableGlobalProxy('127.0.0.1', '8001', 'https');
+    try {
+      AnyProxy.utils.systemProxyMgr.enableGlobalProxy('127.0.0.1', '8001');
+      logger.info('HTTP代理已开启');
+      AnyProxy.utils.systemProxyMgr.enableGlobalProxy('127.0.0.1', '8001', 'https');
+      logger.info('HTTPS代理已开启');
+    } catch (error) {
+      logger.error('代理开启失败', error);
+      outputLog('代理开启失败，请检查权限或端口占用', true);
+    }
     outputLog('下载来源为网络');
     outputLog('代理开启成功，准备批量下载...', true);
     outputLog('请在微信打开任意一篇需要批量下载的公号的文章', true);
@@ -632,12 +639,25 @@ function createProxy(): AnyProxy.ProxyServer {
     rule: {
       summary: 'My Custom Rule',
       beforeSendResponse(requestDetail, responseDetail) {
-        // 批量下载
-        if (DL_TYPE == DlEventEnum.BATCH_WEB && requestDetail.url.indexOf('https://mp.weixin.qq.com/mp/getbizbanner') == 0) {
+        // 记录所有微信相关的请求用于调试
+        if (requestDetail.url.indexOf('mp.weixin.qq.com') !== -1) {
+          logger.debug('微信请求URL:', requestDetail.url);
+        }
+        
+        // 批量下载 - 支持多个可能的触发URL
+        if (DL_TYPE == DlEventEnum.BATCH_WEB && (
+          requestDetail.url.indexOf('https://mp.weixin.qq.com/mp/getbizbanner') == 0 ||
+          requestDetail.url.indexOf('https://mp.weixin.qq.com/mp/profile_ext?action=getmsg') !== -1 ||
+          requestDetail.url.indexOf('https://mp.weixin.qq.com/mp/getappmsgext') !== -1 ||
+          requestDetail.url.indexOf('https://mp.weixin.qq.com/mp/jsmonitor') == 0
+        )) {
           const uin = HttpUtil.getQueryVariable(requestDetail.url, 'uin');
           const biz = HttpUtil.getQueryVariable(requestDetail.url, '__biz');
           const key = HttpUtil.getQueryVariable(requestDetail.url, 'key');
           const passTicket = HttpUtil.getQueryVariable(requestDetail.url, 'pass_ticket');
+          
+          logger.debug('批量下载参数提取:', { uin, biz, key, passTicket, url: requestDetail.url });
+          
           if (uin && biz && key) {
             GZH_INFO = new GzhInfo(biz, key, uin);
             GZH_INFO.passTicket = passTicket;

@@ -82,6 +82,12 @@ Three download modes:
 - **Worker Thread Safety**: Changes to worker.ts should consider all DlEventEnum values (ONE, BATCH_WEB, BATCH_DB, BATCH_SELECT)
 - **UI State Consistency**: Frontend changes should maintain proper button states and user feedback for all modes
 
+## Monitor Mode Specific Notes
+- **Critical Proxy Pattern**: Always set `PROXY_SERVER = null` after `PROXY_SERVER.close()` to enable proper reuse
+- **Download Interval**: Located in `downloadOption.dlInterval` (default: 100ms), affects sequential download speed in `batchDownloadFromWebSelect()`
+- **Two-Step Process**: Start monitoring (collects URLs) → Stop monitoring (triggers download of collected articles)
+- **Proxy Lifecycle**: `monitorLimitArticle()` → `createProxy()` → collect URLs → `stopMonitorLimitArticle()` → `cleanupProxyImmediate()` → download articles
+
 ---
 
 # COMPREHENSIVE PROJECT ANALYSIS
